@@ -1,0 +1,22 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{82803A93-47F7-4BB4-AD3C-FBA2C4F67214}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Mechanics",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	]
+}

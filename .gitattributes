@@ -1,0 +1,2 @@
+Content/Fab/**/*.uasset filter=lfs diff=lfs merge=lfs -text
+Content/Fab/**/*.umap filter=lfs diff=lfs merge=lfs -text
