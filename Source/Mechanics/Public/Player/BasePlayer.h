@@ -11,6 +11,13 @@ class USkeletalMeshComponent;
 class UInputAction;
 class UInputMappingContext;
 class UPhysicsHandleComponent;
+
+class UFlashLightComponent;
+class UHealthComponent;
+class UStaminaComponent;
+class URadiationComponent;
+class USurvivalComponent;
+
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPlayer, Log, All)
@@ -63,8 +70,24 @@ class MECHANICS_API ABasePlayer : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mesh", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> pFP_MeshComponent;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="PhysicsHandle", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UPhysicsHandleComponent> pGrabHandleComponent;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlashLight", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UFlashLightComponent> pFlashLightComponent;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UHealthComponent> pHealthComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stamina", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UStaminaComponent> pStaminaComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radiation", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<URadiationComponent> pRadiationComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Survival", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USurvivalComponent> pSurvivalComponent;
+
 	
 #pragma endregion 	
 	
@@ -112,10 +135,15 @@ public:
 	USkeletalMeshComponent* GetFpsMeshComponent() const;		
 	UPhysicsHandleComponent* GetGrabComponent() const;
 	
+private:
 	
-public:	
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
-
+	void DebugMovement();
+	
+#endif
+	
+	
 };
 
 /*--------------------------------------------------------------------------------------------------------------------*/

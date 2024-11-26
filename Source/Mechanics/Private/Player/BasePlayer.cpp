@@ -8,7 +8,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Player/FlashLightComponent.h"
+#include "Player/HealthComponent.h"
+#include "Player/StaminaComponent.h"
+#include "Player/RadiationComponent.h"
+#include "Player/SurvivalComponent.h"
 
 DEFINE_LOG_CATEGORY(LogPlayer)
 
@@ -25,9 +31,18 @@ ABasePlayer::ABasePlayer(const FObjectInitializer& Initializer)
 	pFP_CameraComponent->SetupAttachment(GetCapsuleComponent());
 	pFP_CameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 80.f)); // Position the camera
 	pFP_CameraComponent->bUsePawnControlRotation = true;
+	pFP_CameraComponent->bCameraMeshHiddenInGame = false;
 
 	pGrabHandleComponent = Initializer.CreateDefaultSubobject<UPhysicsHandleComponent>(this, "Player_PhysicsHandleComponent");
+	pFlashLightComponent = Initializer.CreateDefaultSubobject<UFlashLightComponent>(this, TEXT("Player_FlashLightComponent"));	
+	pFlashLightComponent->SetupAttachment(pFP_CameraComponent);
+
+	pHealthComponent = Initializer.CreateDefaultSubobject<UHealthComponent>(this, TEXT("Player_HealthComponent"));
+	pRadiationComponent = Initializer.CreateDefaultSubobject<URadiationComponent>(this, TEXT("Player_RadiationComponent"));
+	pStaminaComponent = Initializer.CreateDefaultSubobject<UStaminaComponent>(this, TEXT("Player_StaminaComponent"));
+	pSurvivalComponent = Initializer.CreateDefaultSubobject<USurvivalComponent>(this, TEXT("Player_SurvivalComponent"));
 	
+
 }
 
 
@@ -38,7 +53,9 @@ void ABasePlayer::PostInitializeComponents()
 	const UWorld* pWorld = GetWorld();
 	if (pWorld != nullptr && pWorld->IsGameWorld())
 	{
-			
+		#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG	
+
+		#endif
 	}
 	
 }
@@ -55,6 +72,9 @@ void ABasePlayer::BeginPlay()
 			Subsystem->AddMappingContext(IMC_Player, 0);
 		}
 	}
+	
+	
+		
 }
 
 void ABasePlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -68,6 +88,12 @@ void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	DebugMovement();
+
+#endif
+	
 }
 
 // Called to bind functionality to input
@@ -90,6 +116,10 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInput->BindAction(IA_FlashLight, ETriggerEvent::Started, this, &ABasePlayer::ToggleFlashLight);
 		EnhancedInput->BindAction(IA_Grab, ETriggerEvent::Started, this, &ABasePlayer::ToggleGrab);
 		EnhancedInput->BindAction(IA_Trow, ETriggerEvent::Started, this, &ABasePlayer::TrowObject);
+
+		// Debug;
+		PlayerInputComponent->BindKey(EKeys::G, IE_Pressed, this, &ABasePlayer::DebugMovement);
+		
 	}
 	else
 	{
@@ -132,7 +162,11 @@ void ABasePlayer::StopJumping()
 
 void ABasePlayer::ToggleFlashLight()
 {
-
+	if (pFlashLightComponent != nullptr)
+	{
+		pFlashLightComponent->ToggleFlashLight();
+		UE_LOG(LogPlayer, Log, TEXT("State: %s"), *UKismetStringLibrary::Conv_BoolToString(pFlashLightComponent->IsVisibleFlashLight()))
+	}
 }
 
 void ABasePlayer::SprintStarted()
@@ -179,3 +213,29 @@ void ABasePlayer::TrowObject()
 {
 
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+											/* Debug */
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+void ABasePlayer::DebugMovement()
+{
+	const UCharacterMovementComponent* pMovement = GetCharacterMovement();
+	check(pMovement != nullptr)
+	
+	const FString& StrMovement = FString::Printf(TEXT("Acceleration: %f, Speed: %s, FlySpeed: %f, JumpZVelocity: %f"),
+		pMovement->MaxAcceleration, *pMovement->Velocity.ToString(), pMovement->MaxFlySpeed, pMovement->JumpZVelocity);
+
+	check(GEngine != nullptr)
+	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Silver, StrMovement);
+}
+
+
+#endif
+
+
+
+
+
