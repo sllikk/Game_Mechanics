@@ -17,7 +17,7 @@ class MECHANICS_API UHealthComponent : public UActorComponent
 	float MaxHealth;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Health", meta=(AllowPrivateAccess  = "true"))
-	float CurrenHealth;	
+	float CurrentHealth;	
 	
 public:	
 	// Sets default values for this component's properties
@@ -31,5 +31,17 @@ protected:
 
 public:	
 
+	float GetCurrentHealth() const;
+	float GetMaxHealth() const;
 	
 };
+
+FORCEINLINE float UHealthComponent::GetCurrentHealth() const
+{
+	return CurrentHealth;
+}
+
+FORCEINLINE float UHealthComponent::GetMaxHealth() const
+{
+	return MaxHealth;
+}

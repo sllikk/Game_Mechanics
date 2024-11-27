@@ -11,7 +11,7 @@ UHealthComponent::UHealthComponent(): MaxHealth(100.0f)
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	CurrenHealth = MaxHealth;
+	CurrentHealth = MaxHealth;
 }
 
 

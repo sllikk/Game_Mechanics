@@ -11,6 +11,7 @@ class USkeletalMeshComponent;
 class UInputAction;
 class UInputMappingContext;
 class UPhysicsHandleComponent;
+class UBaseUserWidget;
 
 class UFlashLightComponent;
 class UHealthComponent;
@@ -27,6 +28,13 @@ class MECHANICS_API ABasePlayer : public ACharacter
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess = "true"))
+	float MaxSpeedRun;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess = "true"))
+	float MaxSpeedWalk;
+	
+	
 #pragma region INPUT_PLAYER
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InputAction", meta=(AllowPrivateAccess = "true"))
@@ -87,7 +95,7 @@ class MECHANICS_API ABasePlayer : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Survival", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USurvivalComponent> pSurvivalComponent;
-
+	
 	
 #pragma endregion 	
 	
@@ -107,6 +115,9 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:	
+
+	UFUNCTION()
+	void DelegateNullStamina();
 	
 #pragma region INPUT_FUNCTIONS
 
@@ -122,11 +133,17 @@ protected:
 	void GrabObject();
 	void ReleaseObject();
 	void TrowObject();
-
+	
 	virtual void Jump() override;
 	virtual void StopJumping() override;	
 	
 #pragma endregion 	
+
+	// UI
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
+	TSubclassOf<UBaseUserWidget> BaseWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UBaseUserWidget> PlayerUI;
 	
 public:	
 
@@ -143,6 +160,8 @@ private:
 	
 #endif
 	
+
+	bool blsRunning;
 	
 };
 

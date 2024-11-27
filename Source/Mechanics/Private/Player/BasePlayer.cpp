@@ -15,11 +15,12 @@
 #include "Player/StaminaComponent.h"
 #include "Player/RadiationComponent.h"
 #include "Player/SurvivalComponent.h"
+#include "UI/BaseUserWidget.h"
 
 DEFINE_LOG_CATEGORY(LogPlayer)
 
 ABasePlayer::ABasePlayer(const FObjectInitializer& Initializer)
-	:Super(Initializer), pFP_CameraComponent(nullptr), pFP_MeshComponent(nullptr), pGrabHandleComponent(nullptr)
+	:Super(Initializer), pFP_CameraComponent(nullptr), pFP_MeshComponent(nullptr), pGrabHandleComponent(nullptr), BaseWidgetClass(nullptr), PlayerUI(nullptr)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -42,7 +43,8 @@ ABasePlayer::ABasePlayer(const FObjectInitializer& Initializer)
 	pStaminaComponent = Initializer.CreateDefaultSubobject<UStaminaComponent>(this, TEXT("Player_StaminaComponent"));
 	pSurvivalComponent = Initializer.CreateDefaultSubobject<USurvivalComponent>(this, TEXT("Player_SurvivalComponent"));
 	
-
+	MaxSpeedRun = 800.0f;
+	MaxSpeedWalk = 500.0f;	
 }
 
 
@@ -57,6 +59,11 @@ void ABasePlayer::PostInitializeComponents()
 
 		#endif
 	}
+
+	if (pStaminaComponent != nullptr)
+	{
+		pStaminaComponent->OnStaminaDepleted.AddDynamic(this, &ABasePlayer::DelegateNullStamina);
+	}
 	
 }
 
@@ -65,22 +72,36 @@ void ABasePlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (const APlayerController* PC = Cast<APlayerController>(Controller))
+	if (UWorld* World = GetWorld())
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		if (const APlayerController* PC = Cast<APlayerController>(Controller))
 		{
-			Subsystem->AddMappingContext(IMC_Player, 0);
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+			{
+				Subsystem->AddMappingContext(IMC_Player, 0);
+			}
+		}
+
+		if (BaseWidgetClass != nullptr) 
+		{
+			PlayerUI = CreateWidget<UBaseUserWidget>(World, BaseWidgetClass);  
+			check(PlayerUI != nullptr)
+
+			PlayerUI->SetHealthUI(pHealthComponent);
+			PlayerUI->SetStaminaUI(pStaminaComponent);
+			PlayerUI->AddToViewport();
 		}
 	}
-	
-	
-		
 }
 
 void ABasePlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
+	check(PlayerUI != nullptr)
+
+	PlayerUI->RemoveFromParent();
+	PlayerUI = nullptr;	
 }
 
 // Called every frame
@@ -128,6 +149,11 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 }
 
+void ABasePlayer::DelegateNullStamina()
+{
+	SprintCompleted();
+}
+
 /*--------------------------------------------------------------------------------------------------------------------*/
 												/* InputFunc */
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -150,8 +176,12 @@ void ABasePlayer::LookTriggered(const FInputActionValue& ActionValue)
 
 void ABasePlayer::Jump()
 {
-	Super::Jump();
-
+	check(pStaminaComponent != nullptr)
+	if (pStaminaComponent->CurrentStamina >= 15)
+	{
+		Super::Jump();
+		pStaminaComponent->UseStamina(EStaminaDrainType::JUMP, 15.0f);
+	}
 }
 
 void ABasePlayer::StopJumping()
@@ -165,18 +195,19 @@ void ABasePlayer::ToggleFlashLight()
 	if (pFlashLightComponent != nullptr)
 	{
 		pFlashLightComponent->ToggleFlashLight();
-		UE_LOG(LogPlayer, Log, TEXT("State: %s"), *UKismetStringLibrary::Conv_BoolToString(pFlashLightComponent->IsVisibleFlashLight()))
 	}
 }
 
 void ABasePlayer::SprintStarted()
 {
-
+	pStaminaComponent->StartStaminaDrainAction(EStaminaDrainType::SPRINT);
+	GetCharacterMovement()->MaxWalkSpeed = MaxSpeedRun;
 }
 
 void ABasePlayer::SprintCompleted()
 {
-
+	pStaminaComponent->StopStaminaDrainAction(EStaminaDrainType::SPRINT);
+	GetCharacterMovement()->MaxWalkSpeed = MaxSpeedWalk;
 }
 
 void ABasePlayer::CrouchStarted()
